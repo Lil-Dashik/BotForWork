@@ -1,0 +1,93 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    networks:
+      - app-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://194.87.94.5:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    networks:
+      - app-network
+    extra_hosts:
+      - "kafka:127.0.0.1"
+
+  lildashik-db:
+    image: postgres:latest
+    container_name: lildashik-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5435:5433"
+    command: -p 5433
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  bot-service-gotowork:
+    image: lildashik/service-forbot-kafka:latest
+    container_name: bot-service-gotowork
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DADATA_KEY: ${DADATA_KEY}
+      DADATA_SECRET: ${DADATA_SECRET}
+      TWOGIS_KEY: ${TWOGIS_KEY}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - kafka
+      - lildashik-db
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  telegram-bot:
+    image: lildashik/telegrambot-kafka:latest
+    container_name: telegram-bot
+    environment:
+      - BOT_NAME=${BOT_NAME}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - SERVICE_URL=${SERVICE_URL}
+      - SERVER_PORT=${SERVER_PORT}
+      - KAFKA_BROKER=${KAFKA_BROKER}
+    ports:
+      - "8082:8081"
+    depends_on:
+      - bot-service-gotowork
+      - kafka
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+volumes:
+  db-data:
+
+networks:
+  app-network:
+    driver: bridge

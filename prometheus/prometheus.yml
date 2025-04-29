@@ -1,0 +1,41 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'bot-service-gotowork'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['194.87.94.5:8081']
+
+  - job_name: 'telegram-bot'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ '194.87.94.5:8082' ]
+
+  - job_name: 'spring-crud'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ '194.87.94.5:8078' ]
+        labels:
+          service: 'crud-app-service'
+
+  - job_name: 'spring-bot'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+       - targets: [ '194.87.94.5:8079' ]
+         labels:
+          service: 'telegram-go-bot-service'
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: [ 'postgres_exporter:9187' ]
+
+  - job_name: 'postgres_2'
+    static_configs:
+      - targets: [ 'postgres_exporter_2:9188' ]
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: [ 'node-exporter:9100' ]
+
+
