@@ -24,10 +24,27 @@ public class GoToWorkCommandConsumer {
     }
 
     @KafkaListener(topics = "bot-go-to-work", groupId = "service-group")
-    public void handleGoToWork(BotCommandDTO dto) throws JSONException {
+    public void handleGoToWork(BotCommandDTO dto) {
         log.info("Go to work команда: {}", dto);
-        parseService.parseAndSave(dto.getTelegramId(), dto.getMessage());
-        sendConfirmation(dto.getTelegramId(), "Отправим уведомление за 30 минут до выезда!");
+        try {
+            parseService.parseAndSave(dto.getTelegramId(), dto.getMessage());
+            sendConfirmation(dto.getTelegramId(), "Отправим уведомление за 30 минут до выезда!");
+        } catch (IllegalArgumentException e) {
+            sendError(dto.getTelegramId(), e.getMessage());
+        } catch (Exception e) {
+            log.error("Ошибка при обработке команды go_to_work", e);
+            sendError(dto.getTelegramId(), "Произошла ошибка при обработке команды. Попробуйте позже.");
+        }
+    }
+
+    private void sendError(Long telegramId, String text) {
+        NotificationDTO error = new NotificationDTO();
+        error.setTelegramUserId(telegramId);
+        error.setMessage(text);
+        error.setNotifyTime(null);
+
+        kafkaTemplate.send("confirmations", telegramId, error);
+        log.warn("Отправлено сообщение об ошибке в Kafka 'confirmations': {}", text);
     }
 
     private void sendConfirmation(Long telegramId, String text) {
