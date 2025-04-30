@@ -47,7 +47,7 @@ services:
       - app-network
 
   bot-service-gotowork:
-    image: lildashik/service-forbot-kafka:latest
+    image: lildashik/service-forbot-kafka-deploy:latest
     container_name: bot-service-gotowork
     environment:
       POSTGRES_URL: ${POSTGRES_URL}
@@ -67,7 +67,7 @@ services:
       - app-network
 
   telegram-bot:
-    image: lildashik/telegrambot-kafka:latest
+    image: lildashik/telegrambot-kafka-deploy:latest
     container_name: telegram-bot
     environment:
       - BOT_NAME=${BOT_NAME}
