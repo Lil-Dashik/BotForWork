@@ -3,7 +3,12 @@ package project.configuration;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
+import project.dto.NotificationDTO;
 
 import java.util.Map;
 
@@ -61,5 +66,21 @@ public class KafkaConfig {
                 .replicas(1)
                 .configs(Map.of("min.insync.replicas", "1"))
                 .build();
+    }
+    @Bean(name = "kafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<Long, NotificationDTO> kafkaListenerContainerFactory(
+            ConsumerFactory<Long, NotificationDTO> consumerFactory) {
+
+        ConcurrentKafkaListenerContainerFactory<Long, NotificationDTO> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory);
+        factory.setCommonErrorHandler(new DefaultErrorHandler(
+                (consumerRecord, exception) -> {
+                    System.err.println("Ошибка при получении сообщения: " + exception.getMessage());
+                },
+                new FixedBackOff(0L, 0)
+        ));
+
+        return factory;
     }
 }
