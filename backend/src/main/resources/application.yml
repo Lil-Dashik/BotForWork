@@ -28,7 +28,6 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BROKER}
     consumer:
-      bootstrap-servers: ${KAFKA_BROKER}
       group-id: crud-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.LongDeserializer

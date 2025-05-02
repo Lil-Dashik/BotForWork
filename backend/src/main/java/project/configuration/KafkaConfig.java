@@ -5,6 +5,7 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -12,7 +13,6 @@ import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.FixedBackOff;
@@ -24,10 +24,14 @@ import java.util.Map;
 @Slf4j
 @Configuration
 public class KafkaConfig {
+    private final  KafkaProperties kafkaProperties;
+
     private final KafkaTemplate<Long, NotificationDTO> notificationKafkaTemplate;
     @Autowired
-    public KafkaConfig(@Qualifier("notificationKafkaTemplate") KafkaTemplate<Long, NotificationDTO> notificationKafkaTemplate){
+    public KafkaConfig(@Qualifier("notificationKafkaTemplate") KafkaTemplate<Long, NotificationDTO> notificationKafkaTemplate,
+                       KafkaProperties kafkaProperties){
         this.notificationKafkaTemplate = notificationKafkaTemplate;
+        this.kafkaProperties = kafkaProperties;
     }
 
     @Bean
@@ -84,18 +88,29 @@ public class KafkaConfig {
                 .build();
     }
 
+
     @Bean
     public ConsumerFactory<Long, BotCommandDTO> botCommandConsumerFactory() {
         JsonDeserializer<BotCommandDTO> deserializer = new JsonDeserializer<>(BotCommandDTO.class);
         deserializer.addTrustedPackages("*");
-        return new DefaultKafkaConsumerFactory<>(new HashMap<>(), new LongDeserializer(), deserializer);
+
+        return new DefaultKafkaConsumerFactory<>(
+                kafkaProperties.getConsumer().buildProperties(null),
+                new LongDeserializer(),
+                deserializer
+        );
     }
 
     @Bean
     public ConsumerFactory<Long, NotificationDTO> notificationConsumerFactory() {
         JsonDeserializer<NotificationDTO> deserializer = new JsonDeserializer<>(NotificationDTO.class);
         deserializer.addTrustedPackages("*");
-        return new DefaultKafkaConsumerFactory<>(new HashMap<>(), new LongDeserializer(), deserializer);
+
+        return new DefaultKafkaConsumerFactory<>(
+                kafkaProperties.getConsumer().buildProperties(null),
+                new LongDeserializer(),
+                deserializer
+        );
     }
 
     @Bean(name = "botCommandKafkaListenerFactory")
