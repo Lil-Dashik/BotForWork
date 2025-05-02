@@ -91,22 +91,16 @@ public class KafkaConfig {
 
     @Bean
     public ConsumerFactory<Long, BotCommandDTO> botCommandConsumerFactory() {
+        Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties(null));
         JsonDeserializer<BotCommandDTO> deserializer = new JsonDeserializer<>(BotCommandDTO.class);
-        return new DefaultKafkaConsumerFactory<>(
-                kafkaProperties.getConsumer().buildProperties(null),
-                new LongDeserializer(),
-                deserializer
-        );
+        return new DefaultKafkaConsumerFactory<>(props, new LongDeserializer(), deserializer);
     }
 
     @Bean
     public ConsumerFactory<Long, NotificationDTO> notificationConsumerFactory() {
+        Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties(null));
         JsonDeserializer<NotificationDTO> deserializer = new JsonDeserializer<>(NotificationDTO.class);
-        return new DefaultKafkaConsumerFactory<>(
-                kafkaProperties.getConsumer().buildProperties(null),
-                new LongDeserializer(),
-                deserializer
-        );
+        return new DefaultKafkaConsumerFactory<>(props, new LongDeserializer(), deserializer);
     }
 
     @Bean(name = "botCommandKafkaListenerFactory")
