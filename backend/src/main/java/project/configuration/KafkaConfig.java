@@ -92,8 +92,6 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<Long, BotCommandDTO> botCommandConsumerFactory() {
         JsonDeserializer<BotCommandDTO> deserializer = new JsonDeserializer<>(BotCommandDTO.class);
-        deserializer.addTrustedPackages("*");
-
         return new DefaultKafkaConsumerFactory<>(
                 kafkaProperties.getConsumer().buildProperties(null),
                 new LongDeserializer(),
@@ -104,8 +102,6 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<Long, NotificationDTO> notificationConsumerFactory() {
         JsonDeserializer<NotificationDTO> deserializer = new JsonDeserializer<>(NotificationDTO.class);
-        deserializer.addTrustedPackages("*");
-
         return new DefaultKafkaConsumerFactory<>(
                 kafkaProperties.getConsumer().buildProperties(null),
                 new LongDeserializer(),
