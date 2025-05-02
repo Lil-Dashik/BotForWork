@@ -29,15 +29,6 @@ public class KafkaConfig {
     public KafkaConfig(@Qualifier("notificationKafkaTemplate") KafkaTemplate<Long, NotificationDTO> notificationKafkaTemplate){
         this.notificationKafkaTemplate = notificationKafkaTemplate;
     }
-    @Bean(name = "notificationKafkaTemplate")
-    public KafkaTemplate<Long, NotificationDTO> notificationKafkaTemplate(ProducerFactory<Long, NotificationDTO> pf) {
-        return new KafkaTemplate<>(pf);
-    }
-
-    @Bean(name = "longKafkaTemplate")
-    public KafkaTemplate<Long, Long> longKafkaTemplate(ProducerFactory<Long, Long> pf) {
-        return new KafkaTemplate<>(pf);
-    }
 
     @Bean
     public NewTopic startCommandTopic() {
