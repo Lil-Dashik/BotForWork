@@ -123,7 +123,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $REMOTE_SERVER "
             cd /home/dasha && \
             sudo docker-compose down && \
-            sudo docker-compose up -d && \
-            sudo rm -f /home/dasha/.env
+            sudo docker-compose up -d 
           "
         if: success()
