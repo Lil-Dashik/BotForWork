@@ -10,6 +10,7 @@ import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 import project.dto.BotCommandDTO;
@@ -77,6 +78,10 @@ public class KafkaConfig {
                 .replicas(1)
                 .configs(Map.of("min.insync.replicas", "1"))
                 .build();
+    }
+    @Bean
+    public KafkaTemplate<Long, Long> longKafkaTemplate(ProducerFactory<Long, Long> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
     }
 
     @Bean(name = "kafkaListenerContainerFactory")

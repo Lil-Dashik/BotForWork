@@ -7,6 +7,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import project.dto.BotCommandDTO;
 import project.dto.NotificationDTO;
+import project.mapper.NotificationMapper;
 import project.service.ParseService;
 
 @Slf4j
@@ -14,12 +15,15 @@ import project.service.ParseService;
 public class GoToWorkCommandConsumer {
     private final ParseService parseService;
     private final KafkaTemplate<Long, NotificationDTO> kafkaTemplate;
+    private final NotificationMapper notificationMapper;
 
     @Autowired
     public GoToWorkCommandConsumer(ParseService parseService,
-                                   KafkaTemplate<Long, NotificationDTO> kafkaTemplate) {
+                                   KafkaTemplate<Long, NotificationDTO> kafkaTemplate,
+                                   NotificationMapper notificationMapper) {
         this.parseService = parseService;
         this.kafkaTemplate = kafkaTemplate;
+        this.notificationMapper = notificationMapper;
     }
 
     @KafkaListener(topics = "bot-go-to-work", groupId = "service-group")
@@ -37,20 +41,14 @@ public class GoToWorkCommandConsumer {
     }
 
     private void sendError(Long telegramId, String text) {
-        NotificationDTO error = new NotificationDTO();
-        error.setTelegramUserId(telegramId);
-        error.setMessage(text);
-        error.setNotifyTime(null);
+        NotificationDTO error = notificationMapper.createSimpleNotification(telegramId, text);
 
         kafkaTemplate.send("confirmations", telegramId, error);
         log.warn("Отправлено сообщение об ошибке в Kafka 'confirmations': {}", text);
     }
 
     private void sendConfirmation(Long telegramId, String text) {
-        NotificationDTO confirmation = new NotificationDTO();
-        confirmation.setTelegramUserId(telegramId);
-        confirmation.setMessage(text);
-        confirmation.setNotifyTime(null);
+        NotificationDTO confirmation = notificationMapper.createSimpleNotification(telegramId, text);
 
         kafkaTemplate.send("confirmations", telegramId, confirmation);
         log.info("Отправлено подтверждение в Kafka 'confirmations': {}", confirmation);
