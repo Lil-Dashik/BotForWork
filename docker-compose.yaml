@@ -56,6 +56,7 @@ services:
       DADATA_KEY: ${DADATA_KEY}
       DADATA_SECRET: ${DADATA_SECRET}
       TWOGIS_KEY: ${TWOGIS_KEY}
+      KAFKA_BROKER: ${KAFKA_BROKER}
     ports:
       - "8081:8081"
     depends_on:
@@ -70,11 +71,11 @@ services:
     image: lildashik/telegrambot-kafka-deploy:latest
     container_name: telegram-bot
     environment:
-      - BOT_NAME=${BOT_NAME}
-      - BOT_TOKEN=${BOT_TOKEN}
-      - SERVICE_URL=${SERVICE_URL}
-      - SERVER_PORT=${SERVER_PORT}
-      - KAFKA_BROKER=${KAFKA_BROKER}
+      BOT_NAME: ${BOT_NAME}
+      BOT_TOKEN: ${BOT_TOKEN}
+      SERVICE_URL: ${SERVICE_URL}
+      SERVER_PORT: ${SERVER_PORT}
+      KAFKA_BROKER: ${KAFKA_BROKER}
     ports:
       - "8082:8081"
     depends_on:
