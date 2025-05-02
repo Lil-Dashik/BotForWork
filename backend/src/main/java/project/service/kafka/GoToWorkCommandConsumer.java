@@ -2,6 +2,7 @@ package project.service.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -19,14 +20,18 @@ public class GoToWorkCommandConsumer {
 
     @Autowired
     public GoToWorkCommandConsumer(ParseService parseService,
-                                   KafkaTemplate<Long, NotificationDTO> kafkaTemplate,
+                                   @Qualifier("notificationKafkaTemplate") KafkaTemplate<Long, NotificationDTO> kafkaTemplate,
                                    NotificationMapper notificationMapper) {
         this.parseService = parseService;
         this.kafkaTemplate = kafkaTemplate;
         this.notificationMapper = notificationMapper;
     }
 
-    @KafkaListener(topics = "bot-go-to-work", groupId = "service-group")
+    @KafkaListener(
+            topics = "bot-go-to-work",
+            groupId = "service-group",
+            containerFactory = "botCommandKafkaListenerFactory"
+    )
     public void handleGoToWork(BotCommandDTO dto) {
         log.info("Go to work команда: {}", dto);
         try {

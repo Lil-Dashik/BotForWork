@@ -18,7 +18,11 @@ public class StartCommandConsumer {
         this.parseService = parseService;
     }
 
-    @KafkaListener(topics = "bot-start", groupId = "service-group")
+    @KafkaListener(
+            topics = "bot-start",
+            groupId = "service-group",
+            containerFactory = "botCommandKafkaListenerFactory"
+    )
     public void handleStart(BotCommandDTO dto) {
         log.info("Start команда: {}", dto);
         parseService.parseAndSaveUser(dto.getTelegramId() + "; " + dto.getMessage());

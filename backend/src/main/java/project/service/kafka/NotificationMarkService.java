@@ -16,7 +16,11 @@ public class NotificationMarkService {
     }
 
     @Transactional
-    @KafkaListener(topics = "mark-notified", groupId = "notification-mark-group")
+    @KafkaListener(
+            topics = "mark-notified",
+            groupId = "notification-mark-group",
+            containerFactory = "notificationKafkaListenerFactory"
+    )
     public void handleMarkNotified(Long telegramUserId) {
         userRepository.findByTelegramUserId(telegramUserId).ifPresent(user -> {
             user.setLastNotificationSent(LocalDate.now());

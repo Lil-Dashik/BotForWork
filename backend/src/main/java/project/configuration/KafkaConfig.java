@@ -2,7 +2,9 @@ package project.configuration;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.serialization.LongDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -12,18 +14,29 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.FixedBackOff;
 import project.dto.BotCommandDTO;
 import project.dto.NotificationDTO;
 
+import java.util.HashMap;
 import java.util.Map;
 @Slf4j
 @Configuration
 public class KafkaConfig {
-    private final KafkaTemplate<Long, NotificationDTO> kafkaTemplate;
+    private final KafkaTemplate<Long, NotificationDTO> notificationKafkaTemplate;
     @Autowired
-    public KafkaConfig(KafkaTemplate<Long, NotificationDTO> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
+    public KafkaConfig(@Qualifier("notificationKafkaTemplate") KafkaTemplate<Long, NotificationDTO> notificationKafkaTemplate){
+        this.notificationKafkaTemplate = notificationKafkaTemplate;
+    }
+    @Bean(name = "notificationKafkaTemplate")
+    public KafkaTemplate<Long, NotificationDTO> notificationKafkaTemplate(ProducerFactory<Long, NotificationDTO> pf) {
+        return new KafkaTemplate<>(pf);
+    }
+
+    @Bean(name = "longKafkaTemplate")
+    public KafkaTemplate<Long, Long> longKafkaTemplate(ProducerFactory<Long, Long> pf) {
+        return new KafkaTemplate<>(pf);
     }
 
     @Bean
@@ -79,14 +92,24 @@ public class KafkaConfig {
                 .configs(Map.of("min.insync.replicas", "1"))
                 .build();
     }
+
     @Bean
-    public KafkaTemplate<Long, Long> longKafkaTemplate(ProducerFactory<Long, Long> producerFactory) {
-        return new KafkaTemplate<>(producerFactory);
+    public ConsumerFactory<Long, BotCommandDTO> botCommandConsumerFactory() {
+        JsonDeserializer<BotCommandDTO> deserializer = new JsonDeserializer<>(BotCommandDTO.class);
+        deserializer.addTrustedPackages("*");
+        return new DefaultKafkaConsumerFactory<>(new HashMap<>(), new LongDeserializer(), deserializer);
     }
 
-    @Bean(name = "kafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<Long, BotCommandDTO> kafkaListenerContainerFactory(
-            ConsumerFactory<Long, BotCommandDTO> consumerFactory) {
+    @Bean
+    public ConsumerFactory<Long, NotificationDTO> notificationConsumerFactory() {
+        JsonDeserializer<NotificationDTO> deserializer = new JsonDeserializer<>(NotificationDTO.class);
+        deserializer.addTrustedPackages("*");
+        return new DefaultKafkaConsumerFactory<>(new HashMap<>(), new LongDeserializer(), deserializer);
+    }
+
+    @Bean(name = "botCommandKafkaListenerFactory")
+    public ConcurrentKafkaListenerContainerFactory<Long, BotCommandDTO> botCommandKafkaListenerFactory(
+            @Qualifier("botCommandConsumerFactory") ConsumerFactory<Long, BotCommandDTO> consumerFactory) {
         ConcurrentKafkaListenerContainerFactory<Long, BotCommandDTO> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
@@ -99,7 +122,7 @@ public class KafkaConfig {
                         errorMsg.setMessage("Ошибка в формате команды. Убедитесь, что вы отправили: <дом>; <работа>; <время>");
                         errorMsg.setNotifyTime(null);
 
-                        kafkaTemplate.send("confirmations", telegramId, errorMsg);
+                        notificationKafkaTemplate.send("confirmations", telegramId, errorMsg);
                     }
 
                     log.warn("Ошибка при обработке сообщения Kafka: {}", exception.getMessage());
@@ -108,7 +131,16 @@ public class KafkaConfig {
         );
 
         factory.setCommonErrorHandler(errorHandler);
-
         return factory;
     }
+
+    @Bean(name = "notificationKafkaListenerFactory")
+    public ConcurrentKafkaListenerContainerFactory<Long, NotificationDTO> notificationKafkaListenerFactory(
+            @Qualifier("notificationConsumerFactory") ConsumerFactory<Long, NotificationDTO> consumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<Long, NotificationDTO> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory);
+        return factory;
+    }
+
 }

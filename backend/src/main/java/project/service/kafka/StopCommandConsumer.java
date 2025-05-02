@@ -15,7 +15,11 @@ public class StopCommandConsumer {
     public StopCommandConsumer(UserService userService) {
         this.userService = userService;
     }
-    @KafkaListener(topics = "bot-stop", groupId = "service-group")
+    @KafkaListener(
+            topics = "bot-stop",
+            groupId = "service-group",
+            containerFactory = "botCommandKafkaListenerFactory"
+    )
     public void handleStop(BotCommandDTO dto) {
         log.info("Stop команда: {}", dto);
         userService.disableNotifications(dto.getTelegramId());
