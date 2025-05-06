@@ -27,6 +27,7 @@ public class NotificationSender {
             for (NotificationDTO notification : notifications) {
                 alertProducer.sendAlert(notification);
                 log.info("Отправлено уведомление для userId={}", notification.getTelegramUserId());
+                alertProducer.sendMarkAsNotified(notification.getTelegramUserId());
             }
         } catch (Exception e) {
             log.error("Ошибка при отправке уведомлений через Kafka", e);

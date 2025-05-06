@@ -1,5 +1,6 @@
 package project.service;
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class GeocodingService {
         this.dadataClient = dadataClient;
     }
 
+    @RateLimiter(name = "dadataLimiter", fallbackMethod = "fallback")
     public Location getCoordinates(String address) {
         log.info("Отправка запроса в DaData для адреса: {}", address);
         List<GeocodingResponse> responses = dadataClient.cleanAddress(List.of(address));
@@ -31,6 +33,11 @@ public class GeocodingService {
         }
 
         log.warn("Пустой ответ DaData для адреса: {}", address);
+        return null;
+    }
+
+    public Location fallback(String address, Throwable t) {
+        log.warn("Rate limit exceeded или ошибка при вызове DaData: {}", t.toString());
         return null;
     }
 }

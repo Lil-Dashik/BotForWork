@@ -15,7 +15,6 @@ import project.model.*;
 import project.repository.AddressAndTimeRepository;
 import project.repository.UserRepository;
 
-import java.time.LocalDate;
 @Slf4j
 @Service
 public class UserService {
@@ -63,11 +62,17 @@ public class UserService {
 
         Location homeLocation = geocodingService.getCoordinates(userDTO.getHomeAddress());
         Location workLocation = geocodingService.getCoordinates(userDTO.getWorkAddress());
-
+        if (homeLocation == null|| workLocation == null) {
+            log.warn("Координаты не получены: home={}, work={}", userDTO.getHomeAddress(), userDTO.getWorkAddress());
+            throw new IllegalStateException("Не удалось получить координаты из-за превышения лимита DaData");
+        }
         Coordinates homeCoordinates = addressAndTimeMapper.toCoordinates(homeLocation);
         Coordinates workCoordinates = addressAndTimeMapper.toCoordinates(workLocation);
-
         Long travelTime = twoGisRouteService.getRouteDurationWithoutTraffic(homeCoordinates, workCoordinates);
+        if (travelTime == null) {
+            log.warn("Время в пути не получено из-за лимита запросов.");
+            throw new IllegalStateException("Не удалось получить маршрут из-за превышения лимита 2ГИС");
+        }
         updateUserWithTravelData(user, oldHomeAddress, addressAndTime, homeLocation, homeCoordinates, workCoordinates, travelTime);
     }
 
@@ -91,14 +96,6 @@ public class UserService {
 
         userMapper.updateUser(user, newCoordinates, travelTime);
         userRepository.save(user);
-    }
-
-
-    public void markAsNotifiedToday(Long telegramUserId) {
-        userRepository.findByTelegramUserId(telegramUserId).ifPresent(user -> {
-            user.setLastNotificationSent(LocalDate.now());
-            userRepository.save(user);
-        });
     }
 
     private boolean timeZoneNeedsRefresh(String currentTimeZone, String oldAddress, String newAddress, String newTimeZone) {

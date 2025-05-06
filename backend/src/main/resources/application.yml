@@ -38,6 +38,16 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.LongSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+resilience4j.ratelimiter:
+  instances:
+    dadataLimiter:
+      limitForPeriod: 6
+      limitRefreshPeriod: 30s
+      timeoutDuration: 0
+    twoGisLimiter:
+      limitForPeriod: 2
+      limitRefreshPeriod: 30s
+      timeoutDuration: 0
 dadata:
   api:
     key: ${DADATA_KEY}

@@ -23,6 +23,8 @@ public class AlertProducer {
         Long telegramUserId = notification.getTelegramUserId();
 
         alertTemplate.send("alerts", telegramUserId, notification);
-        markTemplate.send("mark-notified", telegramUserId, telegramUserId);
+    }
+    public void sendMarkAsNotified(Long telegramUserId) {
+        markTemplate.send("mark-notified",telegramUserId, telegramUserId);
     }
 }
